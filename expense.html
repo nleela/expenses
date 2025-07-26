@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%220.9em%22 font-size=%2290%22>💰</text></svg>">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --secondary: #f97316;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --muted: #94a3b8;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; }
+    .quick-note-btn {
+      background: var(--secondary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    .upload-btn, .save-btn {
+      background: white;
+      color: var(--text);
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+    nav {
+      background: white;
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    nav button {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      color: var(--text);
+      border-bottom: 2px solid transparent;
+    }
+    nav button.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: bold;
+    }
+    .container {
+      padding: 2rem;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    label { font-size: 0.9rem; color: #475569; }
+    input, select, textarea, button {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      font: inherit;
+    }
+    input, select, textarea { width: 100%; }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 0.6rem;
+      border: 1px solid #e2e8f0;
+    }
+    .right { text-align: right; }
+    .muted { color: var(--muted); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .note-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e2e8f0;
+      cursor: pointer;
+    }
+    .note-date { flex: 0 0 150px; font-size: 0.9rem; color: var(--muted); }
+    .note-text { flex: 1; }
+    .danger-btn {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 0.4rem 0.6rem;
+      border-radius: 5px;
+      font-size: 0.85rem;
+    }
+    .expense-form {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      align-items: end;
+    }
+	#amount {
+	text-align: center;
+	}
+	.center {
+	text-align: center;
+	}
+    #expensesTable th,
+    #expensesTable td {
+      text-align: center;
+}
+
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Local Expense Tracker</h1>
+    <div>
+      <label class="upload-btn">
+        Upload JSON
+        <input type="file" accept=".json" onchange="importData(event)" style="display:none" />
+      </label>
+      <button class="save-btn" onclick="exportData()">Save</button>
+      <button class="quick-note-btn" onclick="openNotePopup()">Add Quick Note</button>
+    </div>
+  </header>
+  <nav>
+    <button class="tab-btn active" onclick="switchTab(this, 'expenses')">Expenses</button>
+    <button class="tab-btn" onclick="switchTab(this, 'notes')">Notes</button>
+  </nav>
+  <div class="container">
+    <div id="expenses" class="tab-content active">
+      <div class="card">
+        <form id="expenseForm" class="expense-form" onsubmit="addExpense(event)">
+          <div>
+            <label>Date</label>
+            <input type="date" id="date" required />
+          </div>
+          <div>
+            <label>Category</label>
+            <select id="category" required>
+              <option value="">Select</option>
+              <option value="Food">Food</option>
+              <option value="Travel">Travel</option>
+              <option value="Bills">Bills</option>
+			  <option value="Coffee">Coffee</option>
+			  <option value="Others">Others</option>
+            </select>
+          </div>
+          <div>
+            <label>Amount</label>
+            <input type="number" id="amount" required />
+          </div>
+          <div>
+            <label>Description</label>
+            <input type="text" id="description" />
+          </div>
+          <div>
+            <button type="submit">Add Expense</button>
+          </div>
+        </form>
+        <table id="expensesTable">
+          <thead>
+            <tr><th>Date</th><th>Category</th><th>Amount</th><th>Description</th><th>Delete</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="notes" class="tab-content">
+      <div class="card">
+        <button onclick="openNotePopup()">Add Note</button>
+        <div id="notesList"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const EXPENSE_KEY = 'expenses';
+    const NOTES_KEY = 'notes';
+    let loadedFile = null;
+
+      async function exportData() {
+      const data = {
+        expenses: JSON.parse(localStorage.getItem(EXPENSE_KEY) || '[]'),
+        notes: JSON.parse(localStorage.getItem(NOTES_KEY) || '[]')
+      };
+    
+      const jsonBlob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    
+      // Check if File System Access API is available
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await showSaveFilePicker({
+            suggestedName: loadedFile || 'session-data.json',
+            types: [{
+              description: 'JSON Files',
+              accept: { 'application/json': ['.json'] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(jsonBlob);
+          await writable.close();
+          alert('Data saved successfully!');
+        } catch (err) {
+          console.error('Save canceled or failed', err);
+        }
+      } else {
+        // Fallback for older browsers
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(jsonBlob);
+        a.download = loadedFile || 'session-data.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    }
+
+
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      loadedFile = file.name;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.expenses) localStorage.setItem(EXPENSE_KEY, JSON.stringify(data.expenses));
+          if (data.notes) localStorage.setItem(NOTES_KEY, JSON.stringify(data.notes));
+          renderExpenses();
+          renderNotes();
+        } catch (err) {
+          alert('Invalid JSON format');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderExpenses() {
+      const expenses = JSON.parse(localStorage.getItem(EXPENSE_KEY) || '[]');
+      const tbody = document.querySelector('#expensesTable tbody');
+      tbody.innerHTML = '';
+      expenses.forEach((expense, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${expense.date}</td>
+          <td>${expense.category}</td>
+          <td class="center">${expense.amount}</td>
+          <td>${expense.description}</td>
+          <td><button class="danger-btn" onclick="deleteExpense(${index})">Delete</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function addExpense(event) {
+      event.preventDefault();
+      const date = document.getElementById('date').value;
+      const category = document.getElementById('category').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const description = document.getElementById('description').value;
+      const expenses = JSON.parse(localStorage.getItem(EXPENSE_KEY) || '[]');
+      expenses.push({ date, category, amount, description });
+      localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
+      renderExpenses();
+      document.getElementById('expenseForm').reset();
+	  const today = new Date();
+	  const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+	  document.getElementById('date').value = localDate;
+    }
+
+    function deleteExpense(index) {
+      const expenses = JSON.parse(localStorage.getItem(EXPENSE_KEY) || '[]');
+      expenses.splice(index, 1);
+      localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses));
+      renderExpenses();
+    }
+
+    function openNotePopup() {
+      const note = prompt('Enter your note:');
+      if (!note) return;
+      const notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+      notes.push({ text: note, date: new Date().toISOString() });
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      renderNotes();
+    }
+
+    function renderNotes() {
+      const notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+      const container = document.getElementById('notesList');
+      container.innerHTML = '';
+      notes.forEach((note, index) => {
+        const row = document.createElement('div');
+        row.className = 'note-row';
+        row.onclick = () => editNote(index);
+        row.innerHTML = `
+          <div class="note-date">${new Date(note.date).toLocaleDateString()}</div>
+          <div class="note-text">${note.text}</div>
+          <button class="danger-btn" onclick="deleteNote(event, ${index})">Delete</button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function editNote(index) {
+      const notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+      const current = notes[index];
+      const updated = prompt('Edit your note:', current.text);
+      if (updated !== null) {
+        notes[index].text = updated;
+        localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+        renderNotes();
+      }
+    }
+
+    function deleteNote(event, index) {
+      event.stopPropagation();
+      const notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]');
+      notes.splice(index, 1);
+      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+      renderNotes();
+    }
+
+    function switchTab(button, tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      localStorage.removeItem(EXPENSE_KEY);
+      localStorage.removeItem(NOTES_KEY);
+      loadedFile = null;
+      renderExpenses();
+      renderNotes();
+	  const today = new Date();
+	  const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+	  document.getElementById('date').value = localDate;
+    });
+    // Warn user before refresh/close if unsaved data exists
+    window.addEventListener('beforeunload', function (e) {
+      const hasData = localStorage.getItem(EXPENSE_KEY) || localStorage.getItem(NOTES_KEY);
+      if (hasData) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+  </script>
+</body>
+</html>
